@@ -324,14 +324,16 @@ class _DefaultMenuState extends State<DefaultMenu> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        buildTop(),
-        const Spacer(),
-        buildControlButtons(),
-        const SizedBox(height: 10),
-        buildBottom(),
-      ],
+    return SafeArea(
+      child: Column(
+        children: [
+          buildTop(),
+          const Spacer(),
+          buildControlButtons(),
+          const SizedBox(height: 10),
+          buildBottom(),
+        ],
+      ),
     );
   }
 }

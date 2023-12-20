@@ -148,16 +148,6 @@ class TextEffect extends CustomPainter {
       toImage(picture, size);
     }
 
-    /// 这里开始画，先判断上一页 在画当前页
-    /// 如果上一页还有东西 直接裁剪或者不画 也许会节约资源??
-    /// 即便出问题 有时候少一帧 大概没影响??
-    // TextEffect? previousTextEffect = textController.getPreviousEffect(this);
-    // if (previousTextEffect != null && previousTextEffect.amount.value > 0.998) {
-    //   print('b ${previousTextEffect.amount.value}');
-    //   return;
-    // }
-    // print('b ${previousTextEffect?.amount.value}');
-
     if (textController.shouldClipStatus) {
       canvas.clipRect(Rect.fromLTRB(
         0,
@@ -561,6 +551,7 @@ class TextEffectManage {
     required this.getAnimationController,
   }) {
     cache = MemoryCache<EffectId, TextEffect>(
+      cacheSize: 128,
       onDelete: (key, value) {
         if (value != null && !unUsedAnimationControllers.contains(value.amount)) {
           unUsedAnimationControllers.add(value.amount);

@@ -21,7 +21,6 @@ class MemoryCache<K, V> {
         while (_cache.length > cacheSize) {
           final k = _cache.keys.first;
           final v = _cache[k];
-          print('清理缓存 $k $v $size');
           onDelete?.call(k, v);
           _cache.remove(k);
         }

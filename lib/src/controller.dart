@@ -226,30 +226,29 @@ class ReadingController extends ChangeNotifier {
     buildEffects();
   }
 
-  int _lastSaveTime = DateTime.now().millisecondsSinceEpoch - 100000;
+  int _lastSaveTime = 0;
   static const saveDelay = Duration(seconds: 10);
 
   checkSave() {
     if (onSave == null) return;
+    if (DateTime.now().millisecondsSinceEpoch < _lastSaveTime) return;
     _lastSaveTime = DateTime.now().add(saveDelay).millisecondsSinceEpoch;
-    Future.delayed(saveDelay).then((value) {
-      if (disposed || DateTime.now().millisecondsSinceEpoch < _lastSaveTime) return;
-      TextPage? textPage = textPageManage.getTextPage(
-        currentChapterIndex,
-        currentPageNum,
-        size,
-        ratio,
-        viewPadding,
-        textConfig,
-      );
-      if (textPage != null) {
-        TextEffect? textEffect =
-            textEffectManage.getTextEffect(textPage, size, ratio, viewPadding, textConfig);
-        if (textEffect != null) {
-          onSave?.call(this, currentChapterIndex, currentPageNum);
-        }
+    if (disposed) return;
+    TextPage? textPage = textPageManage.getTextPage(
+      currentChapterIndex,
+      currentPageNum,
+      size,
+      ratio,
+      viewPadding,
+      textConfig,
+    );
+    if (textPage != null) {
+      TextEffect? textEffect =
+          textEffectManage.getTextEffect(textPage, size, ratio, viewPadding, textConfig);
+      if (textEffect != null) {
+        onSave?.call(this, currentChapterIndex, currentPageNum);
       }
-    });
+    }
   }
 
   ui.Image? _backImage;
@@ -296,6 +295,7 @@ class ReadingController extends ChangeNotifier {
       if (previousTextEffect != null) {
         currentChapterIndex = previousTextEffect.textPage.chapterIndex;
         currentPageNum = previousTextEffect.textPage.pageNum;
+        checkSave();
         previousTextEffect.amount.forward().then((value) {
           if (disposed) return;
           if (currentPageNum == 1 || currentPageNum == previousTextEffect.textPage.totalPage) {
@@ -303,7 +303,6 @@ class ReadingController extends ChangeNotifier {
             buildEffects();
             notifyListeners();
           }
-          checkSave();
         });
       }
     }
@@ -323,6 +322,7 @@ class ReadingController extends ChangeNotifier {
       if (nextTextEffect != null) {
         currentChapterIndex = nextTextEffect.textPage.chapterIndex;
         currentPageNum = nextTextEffect.textPage.pageNum;
+        checkSave();
         textEffect.amount.reverse().then((value) {
           if (disposed) return;
           if (currentPageNum == 1 || currentPageNum == nextTextEffect.textPage.totalPage) {
@@ -330,7 +330,6 @@ class ReadingController extends ChangeNotifier {
             buildEffects();
             notifyListeners();
           }
-          checkSave();
         });
       } else {
         if (textEffect.textPage.chapterIndex == chapterNames.length - 1) {
