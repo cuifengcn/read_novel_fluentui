@@ -95,7 +95,7 @@ class TextPageManage {
     required this.onLoadChapter,
     required this.readingController,
   }) {
-    cache = MemoryCache<String, TextPage>(cacheSize: 256);
+    cache = MemoryCache<String, TextPage>(cacheSize: 128);
     chapterContentManage = ChapterContentManage(
       chapterNames: chapterNames,
       onLoadChapter: onLoadChapter,
@@ -449,8 +449,13 @@ class TextPageManage {
       page.totalPage = totalPage;
       page.percent = page.pageNum / totalPage / chapterNames.length + chapterPercent;
     }
+    tp.dispose();
     //把每一章有多少页保存一下
     chapterTotalPageNumMapping[chapterIndex] = pages.length;
     return pages;
+  }
+
+  dispose() {
+    cache.clear();
   }
 }

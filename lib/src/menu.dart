@@ -324,17 +324,14 @@ class _DefaultMenuState extends State<DefaultMenu> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedPositioned(
-      duration: const Duration(seconds: 1),
-      child: Column(
-        children: [
-          buildTop(),
-          const Spacer(),
-          buildControlButtons(),
-          const SizedBox(height: 10),
-          buildBottom(),
-        ],
-      ),
+    return Column(
+      children: [
+        buildTop(),
+        const Spacer(),
+        buildControlButtons(),
+        const SizedBox(height: 10),
+        buildBottom(),
+      ],
     );
   }
 }

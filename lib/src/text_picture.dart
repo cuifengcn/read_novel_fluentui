@@ -28,7 +28,7 @@ class TextPictureManage {
     required this.chapterNames,
   }) {
     cache = MemoryCache<String, ui.Picture>(
-      cacheSize: 1024,
+      cacheSize: 64,
       onDelete: (key, value) {
         if (value != null) {
           value.dispose();

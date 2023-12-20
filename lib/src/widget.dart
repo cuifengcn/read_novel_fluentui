@@ -1,9 +1,9 @@
 import 'dart:ui';
 
-import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:read_novel_fluentui/src/controller.dart';
+import 'package:read_novel_fluentui/src/page_effect.dart';
 
 import 'const.dart';
 
@@ -20,9 +20,9 @@ class ReadingPage extends StatefulWidget {
 }
 
 class _ReadingPageState extends State<ReadingPage> with TickerProviderStateMixin {
-  List<CustomPaint> getPages() {
+  List getPages() {
     final effects = widget.controller.effects;
-    return effects.map((e) => CustomPaint(painter: e)).toList();
+    return effects.map((e) => e is TextEffect ? CustomPaint(painter: e) : e).toList();
   }
 
   @override
@@ -91,10 +91,6 @@ class _ReadingPageState extends State<ReadingPage> with TickerProviderStateMixin
                   widget.controller.nextPage();
                 } else if (logicalKey == LogicalKeyboardKey.arrowRight) {
                   widget.controller.nextPage();
-                  // } else if (logicalKey == LogicalKeyboardKey.home) {
-                  //   widget.controller.goToPage(widget.controller.firstIndex);
-                  // } else if (logicalKey == LogicalKeyboardKey.end) {
-                  //   widget.controller.goToPage(widget.controller.lastIndex);
                 } else if (logicalKey == LogicalKeyboardKey.enter ||
                     logicalKey == LogicalKeyboardKey.numpadEnter) {
                   widget.controller.toggleMenuDialog(context);
@@ -144,24 +140,16 @@ class _ReadingPageState extends State<ReadingPage> with TickerProviderStateMixin
                     // color: widget.controller.config.backgroundColor,
                     width: double.infinity,
                     height: double.infinity,
-                    child: Column(
+                    child: const Column(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("恭喜您完成阅读！", style: FluentTheme.of(context).typography.title),
+                        // Text("恭喜您完成阅读！", style: FluentTheme.of(context).typography.title),
                       ],
                     ),
                   ),
                   ...getPages(),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 500),
-                    child: Visibility(
-                      visible: widget.controller.isShowMenu,
-                      child: widget.controller.menuBuilder!(widget.controller),
-                    ),
-                  ),
-                  // if (widget.controller.isShowMenu && widget.controller.menuBuilder != null)
-                  //   widget.controller.menuBuilder!(widget.controller),
+                  if (widget.controller.isShowMenu) widget.controller.menuBuilder!(widget.controller),
                 ],
               ),
             ),

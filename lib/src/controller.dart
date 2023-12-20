@@ -45,10 +45,10 @@ class ReadingController extends ChangeNotifier {
   final Future<String> Function(int index, String chapterName) onLoadChapter;
 
   /// 保存配置文件的回调
-  final Future<bool> Function(TextConfig config, double percent)? onSave;
+  final Function(ReadingController controller, int currChapterIndex, int currPageNum)? onSave;
 
   ///显示/隐藏menu回调
-  final Future<bool> Function(bool isShowMenu)? onToggleMenu;
+  final Function(bool isShowMenu)? onToggleMenu;
 
   /// 构建menu
   Widget Function(ReadingController textController)? menuBuilder;
@@ -144,45 +144,70 @@ class ReadingController extends ChangeNotifier {
         textConfig,
       );
 
-  buildEffects({notify = false}) {
+  buildEffects({notify = false, times = 10}) {
     TextPage? currentTextPage = this.currentTextPage;
-    if (currentTextPage == null) return;
+    if (currentTextPage == null) {
+      if (times >= 0) {
+        /// 内容可能还没加载完成，1秒后进行检查
+        if (currentChapterEffects.isNotEmpty) {
+          currentChapterEffects.clear();
+          if (notify && !disposed) notifyListeners();
+        }
+
+        Future.delayed(const Duration(seconds: 1), () {
+          buildEffects(notify: true, times: times - 1);
+        });
+      }
+      return;
+    }
+
+    final currEffects = textEffectManage.getCurrChapterEffects(
+      currentTextPage,
+      size,
+      ratio,
+      viewPadding,
+      textConfig,
+    );
     currentChapterEffects
       ..clear()
-      ..addAll(textEffectManage.getCurrChapterEffects(
-        currentTextPage,
-        size,
-        ratio,
-        viewPadding,
-        textConfig,
-      ));
+      ..addAll(currEffects);
+
+    final nextEffects = textEffectManage.getNextChapterEffects(
+      currentTextPage,
+      size,
+      ratio,
+      viewPadding,
+      textConfig,
+    );
+
     nextChapterEffects
       ..clear()
-      ..addAll(textEffectManage.getNextChapterEffects(
-        currentTextPage,
-        size,
-        ratio,
-        viewPadding,
-        textConfig,
-      ));
+      ..addAll(nextEffects);
+    final prevEffects = textEffectManage.getPreviousChapterEffects(
+      currentTextPage,
+      size,
+      ratio,
+      viewPadding,
+      textConfig,
+    );
+
     previousChapterEffects
       ..clear()
-      ..addAll(textEffectManage.getPreviousChapterEffects(
-        currentTextPage,
-        size,
-        ratio,
-        viewPadding,
-        textConfig,
-      ));
+      ..addAll(prevEffects);
     if (notify) {
       notifyListeners();
     }
+    checkSave();
   }
 
-  List<TextEffect> get effects {
-    final res = <TextEffect>[
+  List get effects {
+    List tmpCurrentChapterEffects = [...currentChapterEffects];
+    if (tmpCurrentChapterEffects.isEmpty) {
+      tmpCurrentChapterEffects.add(const Center(child: ProgressRing()));
+    }
+    final res = [
       ...previousChapterEffects,
-      ...currentChapterEffects,
+      ...tmpCurrentChapterEffects,
       ...nextChapterEffects,
     ].reversed.toList();
     return res;
@@ -221,7 +246,7 @@ class ReadingController extends ChangeNotifier {
         TextEffect? textEffect =
             textEffectManage.getTextEffect(textPage, size, ratio, viewPadding, textConfig);
         if (textEffect != null) {
-          onSave?.call(textConfig, textEffect.textPage.percent);
+          onSave?.call(this, currentChapterIndex, currentPageNum);
         }
       }
     });
@@ -269,11 +294,11 @@ class ReadingController extends ChangeNotifier {
         textConfig,
       );
       if (previousTextEffect != null) {
+        currentChapterIndex = previousTextEffect.textPage.chapterIndex;
+        currentPageNum = previousTextEffect.textPage.pageNum;
         previousTextEffect.amount.forward().then((value) {
           if (disposed) return;
-          currentChapterIndex = previousTextEffect.textPage.chapterIndex;
-          currentPageNum = previousTextEffect.textPage.pageNum;
-          if (currentPageNum == 0 || currentPageNum == previousTextEffect.textPage.totalPage) {
+          if (currentPageNum == 1 || currentPageNum == previousTextEffect.textPage.totalPage) {
             /// 更新effects
             buildEffects();
             notifyListeners();
@@ -296,11 +321,11 @@ class ReadingController extends ChangeNotifier {
         textConfig,
       );
       if (nextTextEffect != null) {
+        currentChapterIndex = nextTextEffect.textPage.chapterIndex;
+        currentPageNum = nextTextEffect.textPage.pageNum;
         textEffect.amount.reverse().then((value) {
           if (disposed) return;
-          currentChapterIndex = nextTextEffect.textPage.chapterIndex;
-          currentPageNum = nextTextEffect.textPage.pageNum;
-          if (currentPageNum == nextTextEffect.textPage.totalPage) {
+          if (currentPageNum == 1 || currentPageNum == nextTextEffect.textPage.totalPage) {
             /// 更新effects
             buildEffects();
             notifyListeners();
@@ -308,8 +333,28 @@ class ReadingController extends ChangeNotifier {
           checkSave();
         });
       } else {
-        /// 没有新的内容了
-        textEffect.amount.forward();
+        if (textEffect.textPage.chapterIndex == chapterNames.length - 1) {
+          /// 最后一章, 没有新的内容了
+          textEffect.amount.forward();
+        } else {
+          /// 下一章没加载出来, 但是仍能跳转到下一章
+          currentChapterIndex = textEffect.textPage.chapterIndex + 1;
+          currentPageNum = 1;
+          textEffect.amount.reverse().then((value) {
+            if (disposed) return;
+            buildEffects(notify: true);
+            checkSave();
+          });
+        }
+      }
+    } else {
+      if (currentChapterIndex < chapterNames.length - 1) {
+        /// 没到最后一章
+        currentChapterIndex += 1;
+        currentPageNum = 1;
+        if (disposed) return;
+        buildEffects(notify: true);
+        checkSave();
       }
     }
   }
@@ -352,6 +397,8 @@ class ReadingController extends ChangeNotifier {
           } else {
             currentTextEffect!.amount.forward();
           }
+        } else {
+          nextPage();
         }
       } else {
         if (currentTextEffect != null) {
@@ -369,6 +416,8 @@ class ReadingController extends ChangeNotifier {
               previousTextEffect.amount.reverse();
             }
           }
+        } else {
+          previousPage();
         }
       }
     }
@@ -388,5 +437,14 @@ class ReadingController extends ChangeNotifier {
       onToggleMenu!(isShowMenu);
     }
     notifyListeners();
+  }
+
+  @override
+  dispose() {
+    disposed = true;
+    textPictureManage.dispose();
+    textEffectManage.dispose();
+    textPageManage.dispose();
+    super.dispose();
   }
 }

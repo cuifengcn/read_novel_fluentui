@@ -129,7 +129,9 @@ class TextEffect extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (!shouldPaint()) return;
+    if (!shouldPaint()) {
+      return;
+    }
 
     final picture = textController.getPicture(
       textPage.chapterIndex,
@@ -495,13 +497,13 @@ class TextEffect extends CustomPainter {
     // 只画当前页面前后两页即可
 
     if (textPage.chapterIndex == textController.currentChapterIndex) {
-      /// 同一章
-      if (textController.currentPageNum - 2 > textPage.pageNum &&
-          textController.currentPageNum + 2 < textPage.pageNum) {
-        return false;
-      } else {
-        /// 同一章，当前页的前后两页
+      /// 同一章，当前页的前后两页
+      if (textController.currentPageNum + 2 > textPage.pageNum &&
+          textController.currentPageNum - 2 < textPage.pageNum) {
         return true;
+      } else {
+        /// 同一章
+        return false;
       }
     } else {
       /// 不是同一章
@@ -559,7 +561,6 @@ class TextEffectManage {
     required this.getAnimationController,
   }) {
     cache = MemoryCache<EffectId, TextEffect>(
-      cacheSize: 256,
       onDelete: (key, value) {
         if (value != null && !unUsedAnimationControllers.contains(value.amount)) {
           unUsedAnimationControllers.add(value.amount);

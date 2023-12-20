@@ -10,6 +10,7 @@ class ChapterContentManage {
   final List<String> chapterNames;
   final Future<String> Function(int index, String chapterName) onLoadChapter;
   final ReadingController readingController;
+  final List<int> fetchingChapters = [];
 
   ChapterContentManage({
     required this.chapterNames,
@@ -26,12 +27,15 @@ class ChapterContentManage {
       if (cache.containsKey(index)) {
         return cache.getValue(index)!;
       } else {
+        if (fetchingChapters.contains(index)) return null;
+        fetchingChapters.add(index);
         onLoadChapter(index, chapterNames[index]).then((content) {
           if (content == '') {
             content = '本章内容为空';
           }
           cache.setValue(index, parseParagraphs(content));
           readingController.buildEffects();
+          fetchingChapters.remove(index);
         });
         return null;
       }
