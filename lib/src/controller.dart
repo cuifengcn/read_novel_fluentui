@@ -227,7 +227,7 @@ class ReadingController extends ChangeNotifier {
   }
 
   int _lastSaveTime = 0;
-  static const saveDelay = Duration(seconds: 10);
+  static const saveDelay = Duration(seconds: 5);
 
   checkSave() {
     if (onSave == null) return;
