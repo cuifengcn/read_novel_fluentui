@@ -16,6 +16,7 @@ class TextPictureManage {
   Size? size;
   double? ratio;
   ViewPadding? viewPadding;
+  List<String> fetchingList = [];
 
   /// 参数
   final ReadingController textController;
@@ -86,14 +87,25 @@ class TextPictureManage {
     } finally {
       /// 添加1秒的延迟
       Future.delayed(const Duration(seconds: 1), () {
-        cache.getValueOrSet('$chapterIndex-${pageNum - 1}', () {
-          return buildTextPicture(
-              chapterIndex, pageNum - 1, totalNum, size, ratio, viewPadding, config);
-        });
-        cache.getValueOrSet('$chapterIndex-${pageNum + 1}', () {
-          return buildTextPicture(
-              chapterIndex, pageNum + 1, totalNum, size, ratio, viewPadding, config);
-        });
+        String key = '$chapterIndex-${pageNum - 1}';
+        if (!fetchingList.contains(key)) {
+          fetchingList.add(key);
+          cache.getValueOrSet('$chapterIndex-${pageNum - 1}', () {
+            return buildTextPicture(
+                chapterIndex, pageNum - 1, totalNum, size, ratio, viewPadding, config);
+          });
+          fetchingList.remove(key);
+        }
+
+        key = '$chapterIndex-${pageNum + 1}';
+        if (!fetchingList.contains(key)) {
+          fetchingList.add(key);
+          cache.getValueOrSet('$chapterIndex-${pageNum + 1}', () {
+            return buildTextPicture(
+                chapterIndex, pageNum + 1, totalNum, size, ratio, viewPadding, config);
+          });
+          fetchingList.remove(key);
+        }
       });
     }
   }

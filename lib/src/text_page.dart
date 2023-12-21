@@ -429,10 +429,10 @@ class TextPageManage {
     }
 
     if (lines.isNotEmpty) {
-      /// 添加空白页
       toNewPage(false, true);
     }
     if (pages.isEmpty) {
+      /// 添加空白页
       pages.add(TextPage(
         lines: [],
         height: config.topPadding + config.bottomPadding,

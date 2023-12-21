@@ -554,7 +554,9 @@ class TextEffectManage {
       cacheSize: 128,
       onDelete: (key, value) {
         if (value != null && !unUsedAnimationControllers.contains(value.amount)) {
-          unUsedAnimationControllers.add(value.amount);
+          value.amount.dispose();
+          ///重复使用会导致内存泄露，所以直接dispose
+          // unUsedAnimationControllers.add(value.amount);
         }
       },
     );

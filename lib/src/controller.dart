@@ -160,6 +160,11 @@ class ReadingController extends ChangeNotifier {
       }
       return;
     }
+    if (isForward != null) {
+      /// 正在进行滑动动画
+      int _timeout = 3;
+
+    }
 
     final currEffects = textEffectManage.getCurrChapterEffects(
       currentTextPage,
